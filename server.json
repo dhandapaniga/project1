@@ -1,0 +1,48 @@
+{
+	"variables": {
+		"client_id": "{{env `CLIENT_ID`}}",
+		"client_secret":"{{env `AZ_CLIENT_SECRET`}}" ,
+		"subscription_id": "{{env `SUSCRIPTION_ID`}}"
+	  },
+	"builders": [{
+		"type": "azure-arm",
+
+		"client_id": "{{user `client_id`}}",
+		"client_secret": "{{user `client_secret`}}",
+		"subscription_id": "{{user `subscription_id`}}",
+		
+
+		"managed_image_resource_group_name": "Azuredevops",
+		"managed_image_name": "webServerImage",
+		"build_resource_group_name": "Azuredevops",
+
+		"os_type": "Linux",
+		"image_publisher": "Canonical",
+		"image_offer": "UbuntuServer",
+		"image_sku": "18.04-LTS",
+
+		"vm_size": "Standard_D2s_v3",
+		"azure_tags": {
+			"creater": "Ganesan",
+			"Managed_by": "Ganesan"
+		}
+	}],
+	"provisioners": [
+		{
+		"type": "shell",
+		"inline": [
+			"echo 'Waiting for cloud-init...'",
+			"sleep 10",
+			"while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for cloud-init...'; sleep 1; done",
+			"echo set debconf to Noninteractive", 
+			"echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections",
+			"sudo apt-get update",
+			"sudo apt-get upgrade -y",
+			"echo 'Hello, World!' > index.html",
+			"nohup busybox httpd -f -p 80 &"
+		],
+		"inline_shebang": "/bin/sh -x",
+		"skip_clean": "true"
+	}
+]
+}
