@@ -1,7 +1,7 @@
 {
 	"variables": {
 		"client_id": "{{env `CLIENT_ID`}}",
-		"client_secret":"{{env `AZ_CLIENT_SECRET`}}" ,
+		"client_secret":"{{env `CLIENT_SECRET`}}" ,
 		"subscription_id": "{{env `SUSCRIPTION_ID`}}"
 	  },
 	"builders": [{

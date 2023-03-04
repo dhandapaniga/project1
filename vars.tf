@@ -13,3 +13,9 @@ variable "prefix" {
   default     = "g-project1"
   type        = string
 }
+
+variable "azurerm_resource_group" {
+  description = "resource group name from the udacity"
+  default     = "Azuredevops"
+  type        = string
+}

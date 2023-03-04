@@ -3,27 +3,30 @@ data "azurerm_image" "my_image" {
   name                = "webServerImage"
   resource_group_name = "Azuredevops"
 }
+data "azurerm_resource_group" "example" {
+  name = "Azuredevops"
+}
 # Resource Group will be updated by importing it to maintain idempotent.
-resource "azurerm_resource_group" "example" {
-  name     = "Azuredevops"
-  location = "southcentralus"
-       tags     = {
-          DeploymentId = "226460" 
-          LaunchId    = "1346" 
-          LaunchType   = "ON_DEMAND_LAB" 
-          TemplateId   = "1181" 
-          TenantId    = "none"
-              env       = "Prod"
-    createdby = "ganesand"
-}
-}
+# resource "azurerm_resource_group" "example" {
+#   name     = "Azuredevops"
+#   location = "southcentralus"
+#        tags     = {
+#           DeploymentId = "226460" 
+#           LaunchId    = "1346" 
+#           LaunchType   = "ON_DEMAND_LAB" 
+#           TemplateId   = "1181" 
+#           TenantId    = "none"
+#               env       = "Prod"
+#     createdby = "ganesand"
+# }
+# }
 
 # Creating the Base Network 
 resource "azurerm_virtual_network" "example" {
   name                = "${var.prefix}-network"
   address_space       = ["10.0.0.0/16"]
-  location            = azurerm_resource_group.example.location
-  resource_group_name = azurerm_resource_group.example.name
+  location            = data.azurerm_resource_group.example.location
+  resource_group_name = data.azurerm_resource_group.example.name
 
   tags = {
     env       = "Prod"
@@ -34,7 +37,7 @@ resource "azurerm_virtual_network" "example" {
 # Creating subnet for the VMs to be placed in for the Webserver
 resource "azurerm_subnet" "example" {
   name                 = "${var.prefix}-subnet"
-  resource_group_name  = azurerm_resource_group.example.name
+  resource_group_name  = data.azurerm_resource_group.example.name
   virtual_network_name = azurerm_virtual_network.example.name
   address_prefixes     = ["10.0.2.0/24"]
 }
@@ -42,8 +45,8 @@ resource "azurerm_subnet" "example" {
 # Network security group for he subnet with the needed rule from project
 resource "azurerm_network_security_group" "example" {
   name                = "${var.prefix}-nsg"
-  location            = azurerm_resource_group.example.location
-  resource_group_name = azurerm_resource_group.example.name
+  location            = data.azurerm_resource_group.example.location
+  resource_group_name = data.azurerm_resource_group.example.name
   # Deny all internet inbound
   security_rule {
     name                       = "deny-internet-inbound"
@@ -102,8 +105,8 @@ resource "azurerm_subnet_network_security_group_association" "example" {
 resource "azurerm_network_interface" "example" {
   count               = var.vm_count
   name                = "${var.prefix}-nic-${count.index + 1}"
-  location            = azurerm_resource_group.example.location
-  resource_group_name = azurerm_resource_group.example.name
+  location            = data.azurerm_resource_group.example.location
+  resource_group_name = data.azurerm_resource_group.example.name
 
   ip_configuration {
     name                          = "internal"
@@ -119,8 +122,8 @@ resource "azurerm_network_interface" "example" {
 # creating publicip for the Load Balancer
 resource "azurerm_public_ip" "example" {
   name                = "${var.prefix}-PublicIPForLB"
-  location            = azurerm_resource_group.example.location
-  resource_group_name = azurerm_resource_group.example.name
+  location            = data.azurerm_resource_group.example.location
+  resource_group_name = data.azurerm_resource_group.example.name
   allocation_method   = "Static"
   tags = {
     env       = "Prod"
@@ -130,8 +133,8 @@ resource "azurerm_public_ip" "example" {
 # Creating the skeleton of the LB with frontend iP association
 resource "azurerm_lb" "example" {
   name                = "${var.prefix}-lb"
-  location            = azurerm_resource_group.example.location
-  resource_group_name = azurerm_resource_group.example.name
+  location            = data.azurerm_resource_group.example.location
+  resource_group_name = data.azurerm_resource_group.example.name
 
   frontend_ip_configuration {
     name                 = "PublicIPAddress"
@@ -171,8 +174,8 @@ resource "azurerm_lb_rule" "production-inbound-rules" {
 
 resource "azurerm_availability_set" "example" {
   name                         = "${var.prefix}-aset"
-  location                     = azurerm_resource_group.example.location
-  resource_group_name          = azurerm_resource_group.example.name
+  location                     = data.azurerm_resource_group.example.location
+  resource_group_name          = data.azurerm_resource_group.example.name
   platform_fault_domain_count  = 3
   platform_update_domain_count = 1
   managed                      = true
@@ -185,8 +188,8 @@ resource "azurerm_availability_set" "example" {
 resource "azurerm_linux_virtual_machine" "example" {
   count               = var.vm_count
   name                = "${var.prefix}-vm-${count.index + 1}"
-  resource_group_name = azurerm_resource_group.example.name
-  location            = azurerm_resource_group.example.location
+  resource_group_name = data.azurerm_resource_group.example.name
+  location            = data.azurerm_resource_group.example.location
   size                = "Standard_D2s_v3"
   admin_username      = "adminuser"
   availability_set_id = azurerm_availability_set.example.id
